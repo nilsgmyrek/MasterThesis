@@ -15,10 +15,13 @@ library(sf)
 library(AICcmodavg)
 
 ## Import and prepare Data #### 
+# Load Presence-Absence Data
+# presence_absence_df <- st_read('/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/presence_absence_by_patch_new.gpkg') %>%
+#   st_drop_geometry() %>%
+#   write.csv('/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/presence_absence_by_patch_new.csv')
 
-# Load Presence-Absenc Data
-presence_absence_df <- st_read('/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/presence_absence_by_patch_new.gpkg') %>%
-  st_drop_geometry()
+# Load Presence-Absence Data
+presence_absence_df <- read.csv('/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/presence_absence_by_patch_new.csv')
 
 # Select relevant columns from presence_absence_df
 presence_absence_df <- presence_absence_df[, c("Patch_ID", "Perimeter", "Area", "CT", "SU_trunc", "min_distance_to_next_patch_km")]
@@ -668,7 +671,7 @@ rm(det_hist_selected)
 ## Species Analysis ## 
 # Binomial Logistic Regression (glm) on Capreolus Capreolus:
 #community$miss_percentage <- (100 - community$C_capreolus) 
-glm.Cc.0 <- glm(cbind(community$C_capreolus, 100) ~ Matrix, family= binomial, data = community)
+glm.Cc.0 <- glm(cbind(community$C_capreolus, 100 - community$C_capreolus) ~ Matrix, family= binomial, data = community)
 glm.Cc.1 <- update(glm.n.sp.0, .~. + log(Area))
 glm.Cc.2 <- update(glm.n.sp.1, .~. + Matrix : log(Area))
 glm.Cc.3 <- update(glm.n.sp.1, .~. + min_distance_to_next_patch_km)
@@ -679,7 +682,7 @@ AIC(glm.Cc.0, glm.Cc.1, glm.Cc.2, glm.Cc.3)
 
 # Binomial Logistic Regression (glm) on Felis sylvestris:
 #community$miss_percentage <- (100 - community$C_capreolus) 
-glm.Fs.0 <- glm(cbind(community$F_silvestris, 100) ~ Matrix, family= binomial, data = community)
+glm.Fs.0 <- glm(cbind(community$F_silvestris, 100 - community$F_silvestris) ~ Matrix, family= binomial, data = community)
 glm.Fs.1 <- update(glm.n.sp.0, .~. + log(Area))
 glm.Fs.2 <- update(glm.n.sp.1, .~. + Matrix : log(Area))
 glm.Fs.3 <- update(glm.n.sp.1, .~. + min_distance_to_next_patch_km)
@@ -690,7 +693,7 @@ AIC(glm.Fs.0, glm.Fs.1, glm.Fs.2, glm.Fs.3)
 
 # Binomial Logistic Regression (glm) on Martes:
 #community$miss_percentage <- (100 - community$C_capreolus) 
-glm.M.0 <- glm(cbind(community$Martes, 100) ~ Matrix, family= binomial, data = community)
+glm.M.0 <- glm(cbind(community$Martes, 100 - community$Martes) ~ Matrix, family= binomial, data = community)
 glm.M.1 <- update(glm.n.sp.0, .~. + log(Area))
 glm.M.2 <- update(glm.n.sp.1, .~. + Matrix : log(Area))
 glm.M.3 <- update(glm.n.sp.1, .~. + min_distance_to_next_patch_km)
@@ -701,7 +704,7 @@ AIC(glm.M.0, glm.M.1, glm.M.2, glm.M.3)
 
 # Binomial Logistic Regression (glm) on Meles meles:
 #community$miss_percentage <- (100 - community$C_capreolus) 
-glm.Mm.0 <- glm(cbind(community$M_meles, 100) ~ Matrix, family= binomial, data = community)
+glm.Mm.0 <- glm(cbind(community$M_meles, 100 - community$M_meles) ~ Matrix, family= binomial, data = community)
 glm.Mm.1 <- update(glm.n.sp.0, .~. + log(Area))
 glm.Mm.2 <- update(glm.n.sp.1, .~. + Matrix : log(Area))
 glm.Mm.3 <- update(glm.n.sp.1, .~. + min_distance_to_next_patch_km)
@@ -712,7 +715,7 @@ AIC(glm.Mm.0, glm.Mm.1, glm.Mm.2, glm.Mm.3)
 
 # Binomial Logistic Regression (glm) on Procyon lotor:
 #community$miss_percentage <- (100 - community$C_capreolus) 
-glm.Pl.0 <- glm(cbind(community$P_lotor, 100) ~ Matrix, family= binomial, data = community)
+glm.Pl.0 <- glm(cbind(community$P_lotor, 100 - community$P_lotor) ~ Matrix, family= binomial, data = community)
 glm.Pl.1 <- update(glm.n.sp.0, .~. + log(Area))
 glm.Pl.2 <- update(glm.n.sp.1, .~. + Matrix : log(Area))
 glm.Pl.3 <- update(glm.n.sp.1, .~. + min_distance_to_next_patch_km)
@@ -723,7 +726,7 @@ AIC(glm.Pl.0, glm.Pl.1, glm.Pl.2, glm.Pl.3)
 
 # Binomial Logistic Regression (glm) on Sus scrufa:
 #community$miss_percentage <- (100 - community$C_capreolus) 
-glm.Ss.0 <- glm(cbind(community$S_scrufa, 100) ~ Matrix, family= binomial, data = community)
+glm.Ss.0 <- glm(cbind(community$S_scrufa, 100 - community$S_scrufa) ~ Matrix, family= binomial, data = community)
 glm.Ss.1 <- update(glm.n.sp.0, .~. + log(Area))
 glm.Ss.2 <- update(glm.n.sp.1, .~. + Matrix : log(Area))
 glm.Ss.3 <- update(glm.n.sp.1, .~. + min_distance_to_next_patch_km)
@@ -734,7 +737,7 @@ AIC(glm.n.sp.0, glm.n.sp.1, glm.n.sp.2, glm.n.sp.3)
 
 # Binomial Logistic Regression (glm) on Vulpes vulpes:
 #community$miss_percentage <- (100 - community$C_capreolus) 
-glm.Vv.0 <- glm(cbind(community$V_vuples, 100) ~ Matrix, family= binomial, data = community)
+glm.Vv.0 <- glm(cbind(community$V_vuples, 100 - community$V_vuples) ~ Matrix, family= binomial, data = community)
 glm.Vv.1 <- update(glm.n.sp.0, .~. + log(Area))
 glm.Vv.2 <- update(glm.n.sp.1, .~. + Matrix : log(Area))
 glm.Vv.3 <- update(glm.n.sp.1, .~. + min_distance_to_next_patch_km)
