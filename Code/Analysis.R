@@ -1,5 +1,5 @@
 # Clean Environment
-# rm(list = ls())
+rm(list = ls())
 
 # Reaload/Load required R-packages 
 library(vegan)
@@ -9,8 +9,8 @@ library(tidyr)
 
 # Load Workspace
 # load("~/Desktop/Master Thesis/Occupancy.RData")
-load("~/Desktop/Master Thesis/Occupancy.RData_new")
-
+# load("~/Desktop/Master Thesis/Occupancy.RData_new")
+load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy.RData")
 
 # Unpack Results (List)
 # List of species in occupancy_det_results
