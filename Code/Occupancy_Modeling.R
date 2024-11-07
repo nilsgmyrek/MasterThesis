@@ -9,7 +9,6 @@ options(scipen = 999)
 set.seed(111)
 
 # Load packages
-# library(lubridate)
 library(unmarked)
 library(tidyr)
 library(dplyr)
@@ -20,7 +19,7 @@ load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Data-Prep.R
 
 ## Occupancy Modeling ####
 # test Loop
-species <- species_of_interest[3]
+# species <- species_of_interest[3]
 
 # Helper function to check for NA in model summary components 
 valid_model_check <- function(model) {
@@ -122,7 +121,7 @@ for (species in species_of_interest) {
       det_estimate <- merge(det_estimate, sitecovs[, c("locationName", "PatchID")], by.x = "row.names", by.y = "locationName", all.x = TRUE)
       
       # Goodness of Fit Test
-      Gof <- mb.gof.test(current_model, nsim = 50)
+      Gof <- mb.gof.test(current_model, nsim = 1000)
       
       # Combine estimates into final results
       results <- merge(occ_estimate, det_estimate, by = "Row.names", suffixes = c("_occ", "_det"))
@@ -168,8 +167,5 @@ for (species in species_of_interest) {
 # Clean environment - remove unnecessary data
 rm(species, current_model, model_list, occ_model_pred, occ_random, occ_random_pred, best_aic, best_model_info, occ_random_model_pred, current_formula, model_type, occ_model, occ_random_model, occ_estimate, det_estimate, detection_history, detection_matrix, Gof, results, sitecovs, speciesData, umf)
 
-
 # Save Workspace 
-# save.image("~/Desktop/Master Thesis/Occupancy.RData_new")
-
-
+save.image("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy.RData")
