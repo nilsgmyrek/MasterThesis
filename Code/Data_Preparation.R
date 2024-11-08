@@ -103,8 +103,7 @@ obs_filtered <- observations %>%
 
 # Define weekly time bins
 obs_filtered <- obs_filtered %>%
-  mutate(week = floor_date(eventStart, "week")) %>%
-  mutate(day = floor_date(eventStart, "day"))
+  mutate(week = floor_date(eventStart, "week")) 
 
 # Create detection history matrix - Weeks
 det_hist <- obs_filtered %>%
@@ -113,7 +112,7 @@ det_hist <- obs_filtered %>%
   spread(key = week, value = detection, fill = 0)
 
 # remove first and last week of deployment to make things more even
-det_hist <-  det_hist[,-c(3,13)]
+# det_hist <-  det_hist[,-c(3,13)]
 
 # Create all possible combinations to assess missing data
 all_combinations <- expand.grid(
@@ -177,8 +176,8 @@ str(sitecovs)
 # Initialize a list to store observation covariates
 obscovs <- list()
 
-# Extract week names (columns 12 to 20 of det_hist_full)
-week_names <- as.factor(names(det_hist_full)[12:20])
+# Extract week names (columns 12 to 22 of det_hist_full)
+week_names <- as.factor(names(det_hist_full)[12:22])
 
 # Initialize a matrix with the correct number of rows (locationNames) and columns (week names)
 weeks_matrix <- matrix(NA, nrow = length(unique(det_hist_full$locationName)), ncol = length(week_names))
