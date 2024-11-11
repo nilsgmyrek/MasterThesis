@@ -12,19 +12,23 @@ library(tidyr)
 # load("~/Desktop/Master Thesis/Occupancy.RData_new")
 load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy1.RData")
 
+
 # Unpack Results (List)
 
 # List of species in occupancy_results - AIC
 # models_of_interest <- c("Capreolus capreolus_Random", "Martes_Random", "Felis silvestris_RandomOnly", "Sus scrofa_Random_Predictors", "Procyon lotor_Random", "Meles meles_Random", "Vulpes vulpes_Random" )
 
 # List of species in occupancy_results - GOF
-# models_of_interest <- c("Capreolus capreolus_Predictors_Random", "Martes_Predictors_Random", "Felis silvestris_Predictors_Occ", "Sus scrofa_RandomOnly", "Procyon lotor_Predictors_Random", "Meles meles_Predictors_Random", "Vulpes vulpes_Random" )
+models_of_interest <- c("Capreolus capreolus_Predictors_Random", "Martes_Predictors_Random", "Felis silvestris_Predictors_Occ", "Sus scrofa_RandomOnly", "Procyon lotor_Predictors_Random", "Meles meles_Predictors_Random", "Vulpes vulpes_Random" )
 
 # List of species in occupancy_results - Random_Predictors
 # models_of_interest <- c("Capreolus capreolus_Random_Predictors", "Martes_Random_Predictors", "Felis silvestris_Random_Predictors", "Sus scrofa_Random_Predictors", "Procyon lotor_Random_Predictors", "Meles meles_Random_Predictors", "Vulpes vulpes_Random_Predictors" )
 
+# List of species in occupancy_results - RandomOnly
+# models_of_interest <- c("Capreolus capreolus_RandomOnly", "Martes_RandomOnly", "Felis silvestris_RandomOnly", "Sus scrofa_RandomOnly", "Procyon lotor_RandomOnly", "Meles meles_RandomOnly", "Vulpes vulpes_RandomOnly" )
+
 # List of species in occupancy_results - Random_Predictors
-models_of_interest <- c("Capreolus capreolus_RandomOnly", "Martes_RandomOnly", "Felis silvestris_RandomOnly", "Sus scrofa_RandomOnly", "Procyon lotor_RandomOnly", "Meles meles_RandomOnly", "Vulpes vulpes_RandomOnly" )
+# models_of_interest <- c("Capreolus capreolus_Random_Predictors", "Martes_Random_Predictors", "Felis silvestris_Random_Predictors", "Sus scrofa_Random_Predictors", "Procyon lotor_Random_Predictors", "Meles meles_Random_Predictors", "Vulpes vulpes_Random_Predictors" )
 
 
 # Initialize an empty dataframe to store combined results
@@ -88,7 +92,6 @@ rm(det_hist_selected)
 
 ## Species Analysis ## 
 # Binomial Logistic Regression (glm) on Capreolus Capreolus:
-#community$miss_percentage <- (100 - community$C_capreolus) 
 glm.Cc.0 <- glm(cbind(community$C_capreolus, 100 - community$C_capreolus) ~ Matrix, family= binomial, data = community)
 glm.Cc.1 <- update(glm.Cc.0, .~. + log(Area))
 glm.Cc.2 <- update(glm.Cc.1, .~. + Matrix : log(Area))
@@ -98,7 +101,6 @@ glm.Cc.3 <- update(glm.Cc.1, .~. + min_distance_to_next_patch_km)
 AIC(glm.Cc.0, glm.Cc.1, glm.Cc.2, glm.Cc.3)
 
 # Binomial Logistic Regression (glm) on Felis sylvestris:
-#community$miss_percentage <- (100 - community$C_capreolus) 
 glm.Fs.0 <- glm(cbind(community$F_silvestris, 100 - community$F_silvestris) ~ Matrix, family= binomial, data = community)
 glm.Fs.1 <- update(glm.Fs.0, .~. + log(Area))
 glm.Fs.2 <- update(glm.Fs.1, .~. + Matrix : log(Area))
@@ -109,7 +111,6 @@ AIC(glm.Fs.0, glm.Fs.1, glm.Fs.2, glm.Fs.3)
 
 
 # Binomial Logistic Regression (glm) on Martes:
-#community$miss_percentage <- (100 - community$C_capreolus) 
 glm.M.0 <- glm(cbind(community$Martes, 100 - community$Martes) ~ Matrix, family= binomial, data = community)
 glm.M.1 <- update(glm.M.0, .~. + log(Area))
 glm.M.2 <- update(glm.M.1, .~. + Matrix : log(Area))
@@ -120,7 +121,6 @@ AIC(glm.M.0, glm.M.1, glm.M.2, glm.M.3)
 
 
 # Binomial Logistic Regression (glm) on Meles meles:
-#community$miss_percentage <- (100 - community$C_capreolus) 
 glm.Mm.0 <- glm(cbind(community$M_meles, 100 - community$M_meles) ~ Matrix, family= binomial, data = community)
 glm.Mm.1 <- update(glm.Mm.0, .~. + log(Area))
 glm.Mm.2 <- update(glm.Mm.1, .~. + Matrix : log(Area))
@@ -131,7 +131,6 @@ AIC(glm.Mm.0, glm.Mm.1, glm.Mm.2, glm.Mm.3)
 
 
 # Binomial Logistic Regression (glm) on Procyon lotor:
-#community$miss_percentage <- (100 - community$C_capreolus) 
 glm.Pl.0 <- glm(cbind(community$P_lotor, 100 - - community$P_lotor) ~ Matrix, family= binomial, data = community)
 glm.Pl.1 <- update(glm.Pl.0, .~. + log(Area))
 glm.Pl.2 <- update(glm.Pl.1, .~. + Matrix : log(Area))
@@ -153,7 +152,6 @@ AIC(glm.Ss.0, glm.Ss.1, glm.Ss.2, glm.Ss.3)
 
 
 # Binomial Logistic Regression (glm) on Vulpes vulpes:
-#community$miss_percentage <- (100 - community$C_capreolus) 
 glm.Vv.0 <- glm(cbind(community$V_vuples, 100- community$V_vuples) ~ Matrix, family= binomial, data = community)
 glm.Vv.1 <- update(glm.Vv.0, .~. + log(Area))
 glm.Vv.2 <- update(glm.Vv.1, .~. + Matrix : log(Area))
@@ -161,6 +159,7 @@ glm.Vv.3 <- update(glm.Vv.1, .~. + min_distance_to_next_patch_km)
 
 # Check for Model Performance
 AIC(glm.Vv.0, glm.Vv.1, glm.Vv.2, glm.Vv.3)
+
 
 
 
@@ -187,6 +186,33 @@ ggplot(adonis_result, aes(x = rownames(adonis_result) , y = R2)) +
   labs(title = "Effect Size (R²) from PERMANOVA",
        x = "Terms", y = "R²") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+### END ###
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -248,4 +274,3 @@ plot(betadisp_result)
 tukey_result <- TukeyHSD(betadisp_result)
 tukey_result
 
-### END ###
