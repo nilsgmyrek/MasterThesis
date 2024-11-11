@@ -132,7 +132,7 @@ for (species in species_of_interest) {
       # Keep track 
       print(species)
       summary(current_model)
-      Gof <- mb.gof.test(current_model, nsim = 10)
+      Gof <- mb.gof.test(current_model, nsim = 1000)
       Gof
       
       # Store results
@@ -187,11 +187,12 @@ for (species in species_of_interest) {
 }
 
 # Clean environment - remove unnecessary data
-rm(det_hist_full, obscovs, sitecovs)
+rm(obscovs, sitecovs)
 
 rm(best_gof, best_model_aic, best_model_gof, current_model, det_estimate, detection_history, detection_matrix, 
    fitted_models, Gof, model, model_definitions, occ_estimate, speciesData, umf, best_aic, chat_diff, current_formula,
    model_formula, model_name, model_type, species, valid_model_check)
 
 # Save Workspace
-save.image("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy1.RData")
+# save.image("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy1.RData")
+
