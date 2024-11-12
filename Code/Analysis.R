@@ -13,13 +13,13 @@ library(tidyr)
 load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy1.RData")
 
 
-# Unpack Results (List)
+# Unpack Occupancy-Results
 
 # List of species in occupancy_results - AIC
 # models_of_interest <- c("Capreolus capreolus_Random", "Martes_Random", "Felis silvestris_RandomOnly", "Sus scrofa_Random_Predictors", "Procyon lotor_Random", "Meles meles_Random", "Vulpes vulpes_Random" )
 
 # List of species in occupancy_results - GOF
-models_of_interest <- c("Capreolus capreolus_Predictors_Random", "Martes_Predictors_Random", "Felis silvestris_Predictors_Occ", "Sus scrofa_RandomOnly", "Procyon lotor_Predictors_Random", "Meles meles_Predictors_Random", "Vulpes vulpes_Random" )
+# models_of_interest <- c("Capreolus capreolus_Predictors_Random", "Martes_Predictors_Random", "Felis silvestris_Predictors_Occ", "Sus scrofa_RandomOnly", "Procyon lotor_Predictors_Random", "Meles meles_Predictors_Random", "Vulpes vulpes_Random" )
 
 # List of species in occupancy_results - Random_Predictors
 # models_of_interest <- c("Capreolus capreolus_Random_Predictors", "Martes_Random_Predictors", "Felis silvestris_Random_Predictors", "Sus scrofa_Random_Predictors", "Procyon lotor_Random_Predictors", "Meles meles_Random_Predictors", "Vulpes vulpes_Random_Predictors" )
@@ -27,8 +27,8 @@ models_of_interest <- c("Capreolus capreolus_Predictors_Random", "Martes_Predict
 # List of species in occupancy_results - RandomOnly
 # models_of_interest <- c("Capreolus capreolus_RandomOnly", "Martes_RandomOnly", "Felis silvestris_RandomOnly", "Sus scrofa_RandomOnly", "Procyon lotor_RandomOnly", "Meles meles_RandomOnly", "Vulpes vulpes_RandomOnly" )
 
-# List of species in occupancy_results - Random_Predictors
-# models_of_interest <- c("Capreolus capreolus_Random_Predictors", "Martes_Random_Predictors", "Felis silvestris_Random_Predictors", "Sus scrofa_Random_Predictors", "Procyon lotor_Random_Predictors", "Meles meles_Random_Predictors", "Vulpes vulpes_Random_Predictors" )
+# List of species in occupancy_results - Predictors_Random
+models_of_interest <- c("Capreolus capreolus_Predictors_Random", "Martes_Predictors_Random", "Felis silvestris_Predictors_Random", "Sus scrofa_Random_Predictors", "Procyon lotor_Predictors_Random", "Meles meles_Predictors_Random", "Vulpes vulpes_Predictors_Random")
 
 
 # Initialize an empty dataframe to store combined results
@@ -100,6 +100,8 @@ glm.Cc.3 <- update(glm.Cc.1, .~. + min_distance_to_next_patch_km)
 # Check for Model Performance
 AIC(glm.Cc.0, glm.Cc.1, glm.Cc.2, glm.Cc.3)
 
+coef(glm.Cc.0)
+
 # Binomial Logistic Regression (glm) on Felis sylvestris:
 glm.Fs.0 <- glm(cbind(community$F_silvestris, 100 - community$F_silvestris) ~ Matrix, family= binomial, data = community)
 glm.Fs.1 <- update(glm.Fs.0, .~. + log(Area))
@@ -119,6 +121,7 @@ glm.M.3 <- update(glm.M.1, .~. + min_distance_to_next_patch_km)
 # Check for Model Performance
 AIC(glm.M.0, glm.M.1, glm.M.2, glm.M.3)
 
+coef(glm.M.3)
 
 # Binomial Logistic Regression (glm) on Meles meles:
 glm.Mm.0 <- glm(cbind(community$M_meles, 100 - community$M_meles) ~ Matrix, family= binomial, data = community)
@@ -129,9 +132,10 @@ glm.Mm.3 <- update(glm.Mm.1, .~. + min_distance_to_next_patch_km)
 # Check for Model Performance
 AIC(glm.Mm.0, glm.Mm.1, glm.Mm.2, glm.Mm.3)
 
+coef(glm.Mm.3)
 
 # Binomial Logistic Regression (glm) on Procyon lotor:
-glm.Pl.0 <- glm(cbind(community$P_lotor, 100 - - community$P_lotor) ~ Matrix, family= binomial, data = community)
+glm.Pl.0 <- glm(cbind(community$P_lotor, 100 - community$P_lotor) ~ Matrix, family= binomial, data = community)
 glm.Pl.1 <- update(glm.Pl.0, .~. + log(Area))
 glm.Pl.2 <- update(glm.Pl.1, .~. + Matrix : log(Area))
 glm.Pl.3 <- update(glm.Pl.1, .~. + min_distance_to_next_patch_km)
@@ -139,6 +143,7 @@ glm.Pl.3 <- update(glm.Pl.1, .~. + min_distance_to_next_patch_km)
 # Check for Model Performance
 AIC(glm.Pl.0, glm.Pl.1, glm.Pl.2, glm.Pl.3)
 
+coef(glm.Pl.3)
 
 # Binomial Logistic Regression (glm) on Sus scrufa:
 #community$miss_percentage <- (100 - community$C_capreolus) 
@@ -150,6 +155,7 @@ glm.Ss.3 <- update(glm.Ss.1, .~. + min_distance_to_next_patch_km)
 # Check for Model Performance
 AIC(glm.Ss.0, glm.Ss.1, glm.Ss.2, glm.Ss.3)
 
+coef(glm.Ss.3)
 
 # Binomial Logistic Regression (glm) on Vulpes vulpes:
 glm.Vv.0 <- glm(cbind(community$V_vuples, 100- community$V_vuples) ~ Matrix, family= binomial, data = community)
@@ -160,8 +166,7 @@ glm.Vv.3 <- update(glm.Vv.1, .~. + min_distance_to_next_patch_km)
 # Check for Model Performance
 AIC(glm.Vv.0, glm.Vv.1, glm.Vv.2, glm.Vv.3)
 
-
-
+coef(glm.Vv.0)
 
 ## Communty Analysis ## 
 # Remove the 'Patch_ID' column and convert data to a matrix
