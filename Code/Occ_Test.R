@@ -21,11 +21,11 @@ load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Data-Prep.R
 model_definitions <- list(
   Model1 = "occu(~ (1 | weeks) ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
   Model2 = "occu(~ (1 | weeks) ~ (1 | PatchID) + Matrix, data = umf, control = list(maxit = 1000))",
-  Model3 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area, data = umf, control = list(maxit = 1000))",
-  Model4 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area + Matrix, data = umf, control = list(maxit = 1000))",
-  Model5 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area * Matrix, data = umf, control = list(maxit = 1000))",
-  Model6 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
-  Model7 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))"
+  Model3 = "occu(~ (1 | weeks) ~ (1 | PatchID) + Area, data = umf, control = list(maxit = 1000))",
+  Model4 = "occu(~ (1 | weeks) ~ (1 | PatchID) + Area + Matrix, data = umf, control = list(maxit = 1000))",
+  Model5 = "occu(~ (1 | weeks) ~ (1 | PatchID) + Area * Matrix, data = umf, control = list(maxit = 1000))",
+  Model6 = "occu(~ (1 | weeks) ~ (1 | PatchID) + Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model7 = "occu(~ (1 | weeks) ~ (1 | PatchID) + Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))"
 )
 
 # Initialize lists to store results
