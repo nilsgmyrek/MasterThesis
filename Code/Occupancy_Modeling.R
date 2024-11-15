@@ -17,30 +17,38 @@ library(AICcmodavg)
 # Import Data
 load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Data-Prep.RData")
 
-# Define model formulas to fit
+# Define model formulas to fit -  + VegetationCover + TreeDensity - 
 model_definitions <- list(
   Model1 = "occu(~ (1 | weeks) ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
   Model2 = "occu(~ (1 | weeks) ~ (1 | PatchID) + Matrix, data = umf, control = list(maxit = 1000))",
-  Model2 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area, data = umf, control = list(maxit = 1000))",
-  Model3 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area + Matrix, data = umf, control = list(maxit = 1000))",
-  Model4 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area * Matrix, data = umf, control = list(maxit = 1000))",
-  Model5 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
-  Model6 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))"
+  Model3 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area, data = umf, control = list(maxit = 1000))",
+  Model4 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area + Matrix, data = umf, control = list(maxit = 1000))",
+  Model5 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area * Matrix, data = umf, control = list(maxit = 1000))",
+  Model6 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model7 = "occu(~ (1 | weeks) ~ (1 | PatchID) + log_Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))"
 )
 
 # Initialize lists to store results
+gof_results <- list()
 aic_results <- list()
 occupancy_results <- list()
 best_model_aic_results <- list()  # Stores the best models by AIC for each species
+best_model_gof_results <- list()
+
+species <- species_of_interest[2]
 
 # Loop through each species
 for (species in species_of_interest) {
   
-  # Initialize list to store models and AIC for each species
+  # Initialize lists to store models, AIC, and GOF for each species
   fitted_models <- list()
   species_aic <- data.frame(model = character(), AIC = numeric(), stringsAsFactors = FALSE)
-  best_aic <- Inf  # Track the best (lowest) AIC for comparison
-  best_model_aic <- NULL  # Placeholder for the best model
+  species_gof <- data.frame(model = character(), p_value = numeric(), c_hat = numeric(), stringsAsFactors = FALSE)
+  best_aic <- Inf  # Track the best (lowest) AIC
+  best_model_aic <- NULL  # Placeholder for the best AIC model
+  
+  best_gof_diff <- Inf  # Track the best GOF based on c-hat closeness to 1
+  best_model_gof <- NULL  # Placeholder for the best GOF model
   
   # Filter for species data
   speciesData <- det_hist_full %>%
@@ -59,7 +67,7 @@ for (species in species_of_interest) {
   umf@siteCovs$log_Area <- scale(umf@siteCovs$log_Area)
   umf@siteCovs$min_distance_to_next_patch_km <- scale(umf@siteCovs$min_distance_to_next_patch_km)
   
-  # Fit models and collect AIC and occupancy results
+  # Fit models and collect AIC and GOF results
   for (model_name in names(model_definitions)) {
     model_formula <- model_definitions[[model_name]]
     current_formula <- model_formula  # Store current formula for reference in output
@@ -80,7 +88,7 @@ for (species in species_of_interest) {
       current_aic <- model@AIC
       species_aic <- rbind(species_aic, data.frame(model = model_name, AIC = current_aic))
       
-      # Check if this model has the lowest AIC so far
+      # Check for best AIC model
       if (current_aic < best_aic) {
         best_aic <- current_aic
         best_model_aic <- list(
@@ -91,57 +99,339 @@ for (species in species_of_interest) {
         )
       }
       
-      # Predict occupancy and detection estimates
+      #Predict occupancy and detection estimates
       occ_estimate <- predict(model, newdata = sitecovs, type = "state")
       det_estimate <- predict(model, newdata = umf, type = "det")
-      
+
       # Restructure detection estimates to match rows with `sitecovs`
       det_estimate <- det_estimate[seq(11, nrow(det_estimate), by = 11), ]
       row.names(occ_estimate) <- sitecovs$locationName
       row.names(det_estimate) <- sitecovs$locationName
       occ_estimate <- merge(occ_estimate, sitecovs[, c("locationName", "PatchID")], by.x = "row.names", by.y = "locationName", all.x = TRUE)
       det_estimate <- merge(det_estimate, sitecovs[, c("locationName", "PatchID")], by.x = "row.names", by.y = "locationName", all.x = TRUE)
+
       
       # Goodness-of-fit test
-      #     Gof <- mb.gof.test(model, nsim = 10)
+      Gof <- mb.gof.test(model, nsim = 500)
       
       # Store results
       occupancy_results[[paste(species, model_name, sep = "_")]] <- data.frame(
-        Patch_ID = occ_estimate$PatchID,
-        Camera = occ_estimate$Row.names,
-        occupancy_estimate = occ_estimate$Predicted,
-        occupancy_SE = occ_estimate$SE,
-        occupancy_upper = occ_estimate$upper,
-        occupancy_lower = occ_estimate$lower,
-        detection_estimate = det_estimate$Predicted,
-        detection_SE = det_estimate$SE,
-        detection_upper = det_estimate$upper,
-        detection_lower = det_estimate$lower,
-        formula = current_formula,
-        AIC = current_aic #,
-        # GOF_chi_square = Gof$chi.square,
-        # GOF_p_value = Gof$p.value,
-        # GOF_c_hat = Gof$c.hat.est
+      Patch_ID = occ_estimate$PatchID,
+      Camera = occ_estimate$Row.names,
+      occupancy_estimate = occ_estimate$Predicted,
+      occupancy_SE = occ_estimate$SE,
+      occupancy_upper = occ_estimate$upper,
+      occupancy_lower = occ_estimate$lower,
+      detection_estimate = det_estimate$Predicted,
+      detection_SE = det_estimate$SE,
+      detection_upper = det_estimate$upper,
+      detection_lower = det_estimate$lower,
+      formula = current_formula,
+      AIC = current_aic,
+      GOF_chi_square = Gof$chi.square,
+      GOF_p_value = Gof$p.value,
+      GOF_c_hat = Gof$c.hat.est
       )
+      
+      # Store GOF result
+      if (!is.null(Gof)) {
+        species_gof <- rbind(species_gof, data.frame(
+          model = model_name,
+          p_value = Gof$p.value,
+          c_hat = Gof$c.hat.est
+        ))
+        
+        # Check for best GOF model: p-value > 0.05 and c.hat closest to 1
+        gof_diff <- abs(Gof$c.hat.est - 1)  # Measure of c-hat closeness to 1
+        if (Gof$p.value > 0.05 && gof_diff < best_gof_diff) {
+          best_gof_diff <- gof_diff
+          best_model_gof <- list(
+            species = species,
+            model_type = model_name,
+            model = model,
+            formula = current_formula,
+            GOF_chi_square = Gof$chi.square,
+            GOF_p_value = Gof$p.value,
+            GOF_c_hat = Gof$c.hat.est
+          )
+        }
+      }
+      
     } else {
       cat("Skipping model", model_name, "due to fitting error.\n")
     }
   }
   
-  # Store AIC results for the species
+  # Store AIC and GOF results for the species
   aic_results[[species]] <- species_aic
+  gof_results[[species]] <- species_gof
   
   # Store the best model by AIC for the current species
   if (!is.null(best_model_aic)) {
     best_model_aic_results[[species]] <- best_model_aic
   }
+  
+  # Store the best model by GOF for the current species
+  if (!is.null(best_model_gof)) {
+    best_model_gof_results[[species]] <- best_model_gof
+  }
 }
+
+
+
+
+
+
+
+# # Initialize lists to store results
+# gof_results <- list()
+# aic_results <- list()
+# occupancy_results <- list()
+# best_model_aic_results <- list()  # Stores the best models by AIC for each species
+# best_model_gof_results <- list()
+# 
+# # Loop through each species
+# for (species in species_of_interest) {
+#   
+#   # Initialize lists to store models, AIC, and GOF for each species
+#   fitted_models <- list()
+#   species_aic <- data.frame(model = character(), AIC = numeric(), stringsAsFactors = FALSE)
+#   best_aic <- Inf  # Track the best (lowest) AIC
+#   best_model_aic <- NULL  # Placeholder for the best AIC model
+#   
+#   best_gof_diff <- Inf  # Track the best GOF based on c-hat closeness to 1
+#   best_model_gof <- NULL  # Placeholder for the best GOF model
+#   
+#   # Filter for species data
+#   speciesData <- det_hist_full %>%
+#     filter(scientificName == species)
+#   
+#   # Extract detection history
+#   detection_history <- speciesData[, grep("^2024", names(speciesData))]
+#   row.names(detection_history) <- speciesData$locationName
+#   detection_matrix <- as.matrix(detection_history)
+#   
+#   # Create unmarked frame
+#   umf <- unmarkedFrameOccu(y = detection_matrix, siteCovs = sitecovs, obsCovs = obscovs)
+#   
+#   # Scale continuous variables
+#   umf@siteCovs$Area <- scale(umf@siteCovs$Area)
+#   umf@siteCovs$log_Area <- scale(umf@siteCovs$log_Area)
+#   umf@siteCovs$min_distance_to_next_patch_km <- scale(umf@siteCovs$min_distance_to_next_patch_km)
+#   
+#   # Fit models and collect AIC and occupancy results
+#   for (model_name in names(model_definitions)) {
+#     model_formula <- model_definitions[[model_name]]
+#     current_formula <- model_formula  # Store current formula for reference in output
+#     
+#     model <- tryCatch(
+#       {
+#         eval(parse(text = model_formula))
+#       },
+#       error = function(e) {
+#         message(paste("Error in model", model_name, "for species", species, ":", e$message))
+#         return(NULL)
+#       }
+#     )
+#     
+#     # If model fitting succeeds, store AIC and Model
+#     if (!is.null(model)) {
+#       fitted_models[[model_name]] <- model
+#       current_aic <- model@AIC
+#       species_aic <- rbind(species_aic, data.frame(model = model_name, AIC = current_aic))
+#       
+#       # Check for best AIC model
+#       if (current_aic < best_aic) {
+#         best_aic <- current_aic
+#         best_model_aic <- list(
+#           species = species,
+#           model_type = model_name,
+#           model = model,
+#           formula = current_formula
+#         )
+#       }
+#       
+#       # Predict occupancy and detection estimates
+#       occ_estimate <- predict(model, newdata = sitecovs, type = "state")
+#       det_estimate <- predict(model, newdata = umf, type = "det")
+#       
+#       # Restructure detection estimates to match rows with `sitecovs`
+#       det_estimate <- det_estimate[seq(11, nrow(det_estimate), by = 11), ]
+#       row.names(occ_estimate) <- sitecovs$locationName
+#       row.names(det_estimate) <- sitecovs$locationName
+#       occ_estimate <- merge(occ_estimate, sitecovs[, c("locationName", "PatchID")], by.x = "row.names", by.y = "locationName", all.x = TRUE)
+#       det_estimate <- merge(det_estimate, sitecovs[, c("locationName", "PatchID")], by.x = "row.names", by.y = "locationName", all.x = TRUE)
+#       
+#       # Goodness-of-fit test
+#       print(species)
+#       summary(model)
+#       Gof <- mb.gof.test(model, nsim = 10)
+#       
+#       # Check for best GOF model: p-value > 0.05 and c.hat closest to 1
+#       if (!is.null(Gof) && Gof$p.value > 0.05) {
+#         gof_diff <- abs(Gof$c.hat.est - 1)  # Measure of c-hat closeness to 1
+#         if (gof_diff < best_gof_diff) {
+#           best_gof_diff <- gof_diff
+#           best_model_gof <- list(
+#             species = species,
+#             model_type = model_name,
+#             model = model,
+#             formula = current_formula,
+#             GOF_chi_square = Gof$chi.square,
+#             GOF_p_value = Gof$p.value,
+#             GOF_c_hat = Gof$c.hat.est
+#           )
+#         }
+#       }
+#       
+#       # Store results
+#       occupancy_results[[paste(species, model_name, sep = "_")]] <- data.frame(
+#         Patch_ID = occ_estimate$PatchID,
+#         Camera = occ_estimate$Row.names,
+#         occupancy_estimate = occ_estimate$Predicted,
+#         occupancy_SE = occ_estimate$SE,
+#         occupancy_upper = occ_estimate$upper,
+#         occupancy_lower = occ_estimate$lower,
+#         detection_estimate = det_estimate$Predicted,
+#         detection_SE = det_estimate$SE,
+#         detection_upper = det_estimate$upper,
+#         detection_lower = det_estimate$lower,
+#         formula = current_formula,
+#         AIC = current_aic,
+#         GOF_chi_square = Gof$chi.square,
+#         GOF_p_value = Gof$p.value,
+#         GOF_c_hat = Gof$c.hat.est
+#       )
+#     } else {
+#       cat("Skipping model", model_name, "due to fitting error.\n")
+#     }
+#   }
+#   
+#   # Store AIC results for the species
+#   aic_results[[species]] <- species_aic
+#   
+#   # Store the best model by AIC for the current species
+#   if (!is.null(best_model_aic)) {
+#     best_model_aic_results[[species]] <- best_model_aic
+#   }
+#   
+#   # Store the best model by GOF for the current species
+#   if (!is.null(best_model_gof)) {
+#     best_model_gof_results[[species]] <- best_model_gof
+#   }
+# }
+# # Loop through each species
+# for (species in species_of_interest) {
+#   
+#   # Initialize list to store models and AIC for each species
+#   fitted_models <- list()
+#   species_aic <- data.frame(model = character(), AIC = numeric(), stringsAsFactors = FALSE)
+#   best_aic <- Inf  # Track the best (lowest) AIC for comparison
+#   best_model_aic <- NULL  # Placeholder for the best model
+#   best_gof <- Inf
+#   best_model_gof <- NULL
+#   
+#   
+#   # Filter for species data
+#   speciesData <- det_hist_full %>%
+#     filter(scientificName == species)
+#   
+#   # Extract detection history
+#   detection_history <- speciesData[, grep("^2024", names(speciesData))]
+#   row.names(detection_history) <- speciesData$locationName
+#   detection_matrix <- as.matrix(detection_history)
+#   
+#   # Create unmarked frame
+#   umf <- unmarkedFrameOccu(y = detection_matrix, siteCovs = sitecovs, obsCovs = obscovs)
+#   
+#   # Scale continuous variables
+#   umf@siteCovs$Area <- scale(umf@siteCovs$Area)
+#   umf@siteCovs$log_Area <- scale(umf@siteCovs$log_Area)
+#   umf@siteCovs$min_distance_to_next_patch_km <- scale(umf@siteCovs$min_distance_to_next_patch_km)
+#   
+#   # Fit models and collect AIC and occupancy results
+#   for (model_name in names(model_definitions)) {
+#     model_formula <- model_definitions[[model_name]]
+#     current_formula <- model_formula  # Store current formula for reference in output
+#     
+#     model <- tryCatch(
+#       {
+#         eval(parse(text = model_formula))
+#       },
+#       error = function(e) {
+#         message(paste("Error in model", model_name, "for species", species, ":", e$message))
+#         return(NULL)
+#       }
+#     )
+#     
+#     # If model fitting succeeds, store AIC and Model
+#     if (!is.null(model)) {
+#       fitted_models[[model_name]] <- model
+#       current_aic <- model@AIC
+#       species_aic <- rbind(species_aic, data.frame(model = model_name, AIC = current_aic))
+#       
+#       # Check if this model has the lowest AIC so far
+#       if (current_aic < best_aic) {
+#         best_aic <- current_aic
+#         best_model_aic <- list(
+#           species = species,
+#           model_type = model_name,
+#           model = model,
+#           formula = current_formula
+#         )
+#       }
+#       
+#       # Predict occupancy and detection estimates
+#       occ_estimate <- predict(model, newdata = sitecovs, type = "state")
+#       det_estimate <- predict(model, newdata = umf, type = "det")
+#       
+#       # Restructure detection estimates to match rows with `sitecovs`
+#       det_estimate <- det_estimate[seq(11, nrow(det_estimate), by = 11), ]
+#       row.names(occ_estimate) <- sitecovs$locationName
+#       row.names(det_estimate) <- sitecovs$locationName
+#       occ_estimate <- merge(occ_estimate, sitecovs[, c("locationName", "PatchID")], by.x = "row.names", by.y = "locationName", all.x = TRUE)
+#       det_estimate <- merge(det_estimate, sitecovs[, c("locationName", "PatchID")], by.x = "row.names", by.y = "locationName", all.x = TRUE)
+#       
+#       # Goodness-of-fit test
+#       Gof <- mb.gof.test(model, nsim = 10)
+#       
+#       # Store results
+#       occupancy_results[[paste(species, model_name, sep = "_")]] <- data.frame(
+#       Patch_ID = occ_estimate$PatchID,
+#       Camera = occ_estimate$Row.names,
+#       occupancy_estimate = occ_estimate$Predicted,
+#       occupancy_SE = occ_estimate$SE,
+#       occupancy_upper = occ_estimate$upper,
+#       occupancy_lower = occ_estimate$lower,
+#       detection_estimate = det_estimate$Predicted,
+#       detection_SE = det_estimate$SE,
+#       detection_upper = det_estimate$upper,
+#       detection_lower = det_estimate$lower,
+#       formula = current_formula,
+#       AIC = current_aic,
+#       GOF_chi_square = Gof$chi.square,
+#       GOF_p_value = Gof$p.value,
+#       GOF_c_hat = Gof$c.hat.est
+#       )
+#     } else {
+#       cat("Skipping model", model_name, "due to fitting error.\n")
+#     }
+#   }
+#   
+#   # Store AIC results for the species
+#   aic_results[[species]] <- species_aic
+#   
+#   # Store the best model by AIC for the current species
+#   if (!is.null(best_model_aic)) {
+#     best_model_aic_results[[species]] <- best_model_aic
+#   }
+# }
 
 # Clean environment - remove unnecessary data
 rm(obscovs, sitecovs)
-
+rm(best_model_gof, Gof, species_gof, best_gof_diff, gof_diff)
 rm(best_model_aic , det_estimate, detection_history, detection_matrix, fitted_models, model, model_definitions, occ_estimate, species_aic, speciesData, umf, best_aic, current_aic, current_formula, model_formula, model_name, species)
 
 # Save Workspace
-save.image("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy.RData")
+# save.image("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy.RData")
 
