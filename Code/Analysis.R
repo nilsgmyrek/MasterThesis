@@ -11,6 +11,34 @@ library(tidyr)
 # load("~/Desktop/Master Thesis/Occupancy.RData")
 # load("~/Desktop/Master Thesis/Occupancy.RData_new")
 load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy.RData")
+#load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy1.RData")
+#load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy_all.RData")
+
+# Create empty data frame to store results
+results <- data.frame(
+  species = character(),
+  model = character(),
+  AIC = numeric(),
+  p_value = numeric(),
+  c_hat = numeric(),
+  stringsAsFactors = FALSE
+)
+
+# Combine AIC and gof results
+for (species in names(aic_results)) {
+  aic_data <- aic_results[[species]]
+  gof_data <- gof_results[[species]]
+  
+  # Merge AIC and GOF data by model
+  species_results <- merge(aic_data, gof_data, by = "model")
+  species_results$species <- species  # Add species name
+  
+  # Append to the combined results
+  results <- rbind(results, species_results)
+}
+
+# View combined results
+print(results)
 
 
 # Unpack Occupancy-Results
