@@ -10,9 +10,9 @@ library(tidyr)
 # Load Workspace
 # load("~/Desktop/Master Thesis/Occupancy.RData")
 # load("~/Desktop/Master Thesis/Occupancy.RData_new")
-load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy.RData")
-#load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy1.RData")
-#load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy_all.RData")
+ load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy.RData")
+# load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy1.RData")
+# load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Occupancy_all.RData")
 
 # Create empty data frame to store results
 results <- data.frame(
