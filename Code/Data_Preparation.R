@@ -164,8 +164,8 @@ sitecovs <- det_hist_full %>%
   distinct()  # Keep unique rows only
 
 # Scale continuous variables in sitecovs
-sitecovs$log_Area <- scale(sitecovs$log_Area)
-sitecovs$min_distance_to_next_patch_km <- scale(sitecovs$min_distance_to_next_patch_km)
+# sitecovs$log_Area <- scale(sitecovs$log_Area)
+# sitecovs$min_distance_to_next_patch_km <- scale(sitecovs$min_distance_to_next_patch_km)
 
 # Check sitecovs-Data
 str(sitecovs)

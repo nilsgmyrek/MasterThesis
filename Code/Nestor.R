@@ -111,18 +111,42 @@ load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Data-Prep.R
 
 # 2. Define models to be tested
 
-# 2.1 Only detection
-models_detect <- list( Model1.1 = "occu(~ 1 ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
-                Model1.2 = "occu(~ VegetationCover ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
-                Model1.3 = "occu(~ TreeDensity ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
-                Model1.4 = "occu(~ VegetationCover + TreeDensity ~ (1 | PatchID), data = umf, control = list(maxit = 1000))"
-                )
+# 2.1 
+models_all <- list(
+  Model1.1 = "occu(~ 1 ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
+  Model1.2 = "occu(~ VegetationCover ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
+  Model1.3 = "occu(~ TreeDensity ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
+  Model1.4 = "occu(~ VegetationCover + TreeDensity ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
+  Model2.1 = "occu(~ 1 ~ (1 | PatchID) + Matrix, data = umf, control = list(maxit = 1000))",
+  Model2.2 = "occu(~ VegetationCover ~ (1 | PatchID) + Matrix, data = umf, control = list(maxit = 1000))",
+  Model2.3 = "occu(~ TreeDensity ~ (1 | PatchID) + Matrix, data = umf, control = list(maxit = 1000))",
+  Model2.4 = "occu(~ VegetationCover + TreeDensity ~ (1 | PatchID) + Matrix, data = umf, control = list(maxit = 1000))",
+  Model3.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area, data = umf, control = list(maxit = 1000))",
+  Model3.2 = "occu(~ VegetationCover ~ (1 | PatchID) + log_Area, data = umf, control = list(maxit = 1000))",
+  Model3.3 = "occu(~ TreeDensity ~ (1 | PatchID) + log_Area, data = umf, control = list(maxit = 1000))",
+  Model3.4 = "occu(~ VegetationCover + TreeDensity ~ (1 | PatchID) + log_Area, data = umf, control = list(maxit = 1000))",
+  Model4.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area + Matrix, data = umf, control = list(maxit = 1000))",
+  Model4.2 = "occu(~ VegetationCover ~ (1 | PatchID) + log_Area + Matrix, data = umf, control = list(maxit = 1000))",
+  Model4.3 = "occu(~ TreeDensity ~ (1 | PatchID) + log_Area + Matrix, data = umf, control = list(maxit = 1000))",
+  Model4.4 = "occu(~ VegetationCover + TreeDensity ~ (1 | PatchID) + log_Area + Matrix, data = umf, control = list(maxit = 1000))",
+  Model5.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area * Matrix, data = umf, control = list(maxit = 1000))",
+  Model5.2 = "occu(~ VegetationCover ~ (1 | PatchID) + log_Area * Matrix, data = umf, control = list(maxit = 1000))",
+  Model5.3 = "occu(~ TreeDensity ~ (1 | PatchID) + log_Area * Matrix, data = umf, control = list(maxit = 1000))",
+  Model5.4 = "occu(~ VegetationCover + TreeDensity ~ (1 | PatchID) + log_Area * Matrix, data = umf, control = list(maxit = 1000))",
+  Model6.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model6.2 = "occu(~ VegetationCover ~ (1 | PatchID) + log_Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model6.3 = "occu(~ TreeDensity ~ (1 | PatchID) + log_Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model6.4 = "occu(~ VegetationCover + TreeDensity ~ (1 | PatchID) + log_Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model7.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model7.2 = "occu(~ VegetationCover~ (1 | PatchID) + log_Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model7.3 = "occu(~ TreeDensity ~ (1 | PatchID) + log_Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model7.4 = "occu(~ VegetationCover + TreeDensity ~ (1 | PatchID) + log_Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))"
+  )
 
-compare.detect <- model.sel(det_hist_full, models_detect, sitecovs, NULL)
-summary(compare.detect[[1]])
+compare.detect <- model.sel(det_hist_full, models_all, sitecovs, NULL)
 
 
-# 2.2 Occupany models
+# 2.2 
 
 models_detect_occu <- list(
  Model1.4 = "occu(~ VegetationCover + TreeDensity ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
@@ -138,14 +162,16 @@ models_detect_occu <- list(
 compare.detect.occu <- model.sel(det_hist_full, models_detect_occu, sitecovs, NULL)
 
 
+# 2.3
+
 models_occu <- list(
-  Model1.4 = "occu(~ 1 ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
-  Model2.4 = "occu(~ 1 ~ (1 | PatchID) + Matrix, data = umf, control = list(maxit = 1000))",
-  Model3.4 = "occu(~ 1 ~ (1 | PatchID) + log_Area, data = umf, control = list(maxit = 1000))",
-  Model4.4 = "occu(~ 1 ~ (1 | PatchID) + log_Area + Matrix, data = umf, control = list(maxit = 1000))",
-  Model5.4 = "occu(~ 1 ~ (1 | PatchID) + log_Area * Matrix, data = umf, control = list(maxit = 1000))",
-  Model6.4 = "occu(~ 1 ~ (1 | PatchID) + log_Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
-  Model7.4 = "occu(~ 1 ~ (1 | PatchID) + log_Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))"
+  Model1.1 = "occu(~ 1 ~ (1 | PatchID), data = umf, control = list(maxit = 1000))",
+  Model2.1 = "occu(~ 1 ~ (1 | PatchID) + Matrix, data = umf, control = list(maxit = 1000))",
+  Model3.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area, data = umf, control = list(maxit = 1000))",
+  Model4.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area + Matrix, data = umf, control = list(maxit = 1000))",
+  Model5.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area * Matrix, data = umf, control = list(maxit = 1000))",
+  Model6.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area + Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))",
+  Model7.1 = "occu(~ 1 ~ (1 | PatchID) + log_Area * Matrix + min_distance_to_next_patch_km, data = umf, control = list(maxit = 1000))"
 )
 
 compare.occu <- model.sel(det_hist_full, models_occu, sitecovs, NULL)
@@ -153,9 +179,5 @@ compare.occu <- model.sel(det_hist_full, models_occu, sitecovs, NULL)
 
 # -----------------------------
 # PLAYGROUND
-
-
-
-Occ.Null = occu(~ VegetationCover ~ (1 | PatchID), data = umf, control = list(maxit = 1000))
 
 

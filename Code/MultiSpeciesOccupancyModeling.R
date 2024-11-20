@@ -1,67 +1,91 @@
-# MultiSpeciesOccu
+# MultiSpeciesOccu: Multi-species occupancy modeling workflow
 
-# Clear environment
-rm(list = ls())
-gc()
+# Clear environment to ensure a clean workspace
+rm(list = ls())  # Remove all objects from the environment
+gc()  # Trigger garbage collection to free memory
 
-# Disable scientific notation
+# Disable scientific notation for better readability of outputs
 options(scipen = 999) 
 
-# Set seed for reproducibility
+# Set seed for reproducibility of results
 set.seed(111)
 
-# Load packages
-library(unmarked)
-library(tidyr)
-library(dplyr)
-# library(AICcmodavg)
+# Load required packages
+library(unmarked)  # For occupancy modeling
+library(tidyr)     # For data manipulation
+library(dplyr)     # For data wrangling
+# library(AICcmodavg)  # For model comparison 
 
-# Import Data
+# Load pre-processed data
 load("/Users/nr72kini/Desktop/Master Thesis/Github/MasterThesis/Data/Data-Prep.RData")
 
 # Initialize an empty list to store detection matrices for each species
 detection_matrices <- list()
 
-# Loop through each species
+# Loop through each species of interest
 for (species in species_of_interest) {
   
-  # Filter data for the current species
+  # Filter detection history for the current species
   species_data <- filter(det_hist_full, scientificName == species)
   
-  # Remove site-related info columns to focus on the detection history
+  # Extract only detection history columns (e.g., date columns) and convert to a data frame
   detection_data <- species_data %>%
-    select(starts_with("2024")) %>%  # All columns starting with a date
-    as.data.frame()  # Convert to a data frame
+    select(starts_with("2024")) %>%  # Extract detection history
+    as.data.frame()
   
-  # Convert detection data to a matrix and assign it to the species list
+  # Convert detection data to a matrix format for use in unmarkedFrame
   detection_matrices[[species]] <- as.matrix(detection_data)
   
-  # Optionally, assign row and column names for easier understanding
+  # Assign meaningful row and column names for the matrix
   rownames(detection_matrices[[species]]) <- species_data$locationName
   colnames(detection_matrices[[species]]) <- colnames(detection_data)
 }
 
+# Clean up intermediate objects
 rm(detection_data, species_data, species)
 
+# Create an unmarkedFrame for multi-species occupancy modeling
+umf <- unmarkedFrameOccuMulti(
+  y = detection_matrices,  # Detection matrices for each species
+  siteCovs = sitecovs      # Site-specific covariates
+)
 
-umf <- unmarkedFrameOccuMulti(y = detection_matrices, siteCovs=sitecovs)
+# Check the design matrix for state formulas
+colnames(umf@fDesign)  # Lists covariates used for state formulas
 
-colnames(umf@fDesign)
+# Define state formulas (occupancy) for testing different covariate combinations
+stateformulas <- c(rep("~1", 127))  # Intercept-only model for all species
+stateformulas0 <- c(rep("~ PatchID", 127))  # Include PatchID as a covariate
+stateformulas1 <- c(rep("~ PatchID + Matrix", 127))  # Add habitat matrix
+stateformulas2 <- c(rep("~ PatchID + log_Area", 127))  # Add log-transformed area
+stateformulas3 <- c(rep("~ PatchID + Matrix + log_Area", 127))  # Combine covariates
+stateformulas4 <- c(rep("~ PatchID + Matrix * log_Area", 127))  # Add interaction term
+stateformulas5 <- c(rep("~ PatchID + Matrix + log_Area + min_distance_to_next_patch_km", 127))  # Add Connectivity
+stateformulas6 <- c(rep("~ PatchID + Matrix * log_Area + min_distance_to_next_patch_km", 127))  # Add interaction term
 
-stateformulas1 <- c("~ PatchID",rep("~1", 126))
-stateformulas2 <- c("~ PatchID", "~ Matrix", rep("~1", 125))
-stateformulas3 <- c("~ PatchID", "~ log_Area", rep("~1", 125))
-stateformulas4 <- c("~ PatchID", "~ Matrix", "~ log_Area", rep("~1", 124))
-stateformulas5 <- c("~ PatchID", "~ Matrix", "~ log_Area", rep("~1", 124))
-stateformulas6 <- c("~ PatchID", "~ Matrix", "~ log_Area", "~ min_distance_to_next_patch_km", rep("~1", 123))
+# Detection formulas (shared for all models)
+detformulas <- c("~1", "~1", "~1", "~1", "~1", "~1", "~1")  # Intercept-only detection formulas
 
-stateformulas <- c(rep("~1", 127))  # Sets all formulas to intercept-only
-detformulas <- c("~1","~1","~1","~1","~1","~1","~1")
+# Fit multi-species occupancy models with different covariates
+Model <- occuMulti(detformulas = detformulas, stateformulas = stateformulas, data = umf, control = list(maxit = 1000))
+Model0 <- occuMulti(detformulas = detformulas, stateformulas = stateformulas0, data = umf, control = list(maxit = 1000))
+Model1 <- occuMulti(detformulas = detformulas, stateformulas = stateformulas1, data = umf, control = list(maxit = 1000))
+Model2 <- occuMulti(detformulas = detformulas, stateformulas = stateformulas2, data = umf, control = list(maxit = 1000))
+Model3 <- occuMulti(detformulas = detformulas, stateformulas = stateformulas3, data = umf, control = list(maxit = 1000))
+Model4 <- occuMulti(detformulas = detformulas, stateformulas = stateformulas4, data = umf, control = list(maxit = 1000))
+Model5 <- occuMulti(detformulas = detformulas, stateformulas = stateformulas5, data = umf, control = list(maxit = 1000))
+Model6 <- occuMulti(detformulas = detformulas, stateformulas = stateformulas6, data = umf, control = list(maxit = 1000))
 
-  Model1.4 <- occuMulti(detformulas=detformulas, stateformulas=stateformulas1, data = umf, control = list(maxit = 1000))
-  Model2.4 <- occuMulti(detformulas=detformulas, stateformulas=stateformulas2, data = umf, control = list(maxit = 1000))
-  Model3.4 <- occuMulti(detformulas=detformulas, stateformulas=stateformulas3, data = umf, control = list(maxit = 1000))
-  Model4.4 <- occuMulti(detformulas=detformulas, stateformulas=stateformulas4, data = umf, control = list(maxit = 1000))
-  Model5.4 <- occuMulti(detformulas=detformulas, stateformulas=stateformulas5, data = umf, control = list(maxit = 1000))
-  Model6.4 <- occuMulti(detformulas=detformulas, stateformulas=stateformulas6, data = umf, control = list(maxit = 1000))
+# Store models in a list
+models <- list(
+  Model0 = Model0,
+  Model1 = Model1,
+  Model2 = Model2,
+  Model3 = Model3,
+  Model4 = Model4,
+  Model5 = Model5,
+  Model6 = Model6
+)
 
+library(AICcmodavg)
+aictab(cand.set = models, modnames = names(models))
