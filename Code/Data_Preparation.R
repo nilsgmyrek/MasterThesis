@@ -13,11 +13,29 @@ library(sf)
 
 ## Import and prepare Data #### 
 # Load Presence-Absenc Data
-presence_absence_df <- st_read('/Users/nr72kini/Desktop/Master Thesis/R/Output/presence_absence_by_patch_new.gpkg') %>%
+presence_absence_sf <- st_read('/Users/nr72kini/Desktop/Master Thesis/R/Output/presence_absence_by_patch_new.gpkg') %>%
+  na.omit() %>%
+  filter(SU_trunc == CT)
+
+# Calculate centroids for Latitude and Longotude
+centroids <- st_centroid(presence_absence_sf)
+
+# Transform to WGS 84 (EPSG: 4326)
+centroids <- st_transform(centroids, crs = 4326)
+
+# Extract the coordinates (longitude and latitude)
+centroids <- st_coordinates(centroids)
+
+# Add latitude and longitude as new columns
+presence_absence_sf$long <- centroids[, 1]
+presence_absence_sf$lat <- centroids[, 2]
+
+# Drop geometry for easier handling
+presence_absence_df <- presence_absence_sf %>%
   st_drop_geometry()
 
 # Select relevant columns from presence_absence_df
-presence_absence_df <- presence_absence_df[, c("Patch_ID", "Perimeter", "Area", "CT", "SU_trunc", "min_distance_to_next_patch_km")]
+presence_absence_df <- presence_absence_df[, c("Patch_ID", "Area", "min_distance_to_next_patch_km", "long", "lat", "CT", "SU_trunc")]
 
 # Load Covariates
 covs <- read.csv('/Users/nr72kini/Desktop/Master Thesis/R/Data/covariate_estimation.csv')
@@ -111,9 +129,6 @@ det_hist <- obs_filtered %>%
   summarize(detection = 1) %>%
   spread(key = week, value = detection, fill = 0)
 
-# remove first and last week of deployment to make things more even
-# det_hist <-  det_hist[,-c(3,13)]
-
 # Create all possible combinations to assess missing data
 all_combinations <- expand.grid(
   deploymentID = unique(deployments$deploymentID),
@@ -127,7 +142,6 @@ existing_combinations <- det_hist %>%
 
 # Calculate missing combinations
 missing_combinations <- anti_join(all_combinations, existing_combinations, by = c("deploymentID", "scientificName"))
-missing_combinations
 
 # Combine with Existing Data
 det_hist_full <- bind_rows(det_hist, missing_combinations) %>%
@@ -144,7 +158,7 @@ det_hist_full <-  det_hist_full[,-c(4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21
 str(det_hist_full)
 
 # Remove unnecessary Data
-rm(all_combinations, covs, deployments, det_hist, existing_combinations, missing_combinations, observations, presence_absence_df, obs_filtered)
+rm(all_combinations, centroids, covs, deployments, det_hist, existing_combinations, missing_combinations, observations, presence_absence_df, presence_absence_sf, obs_filtered)
 
 # Filter Patches with wrong number of camera traps
 det_hist_full <- det_hist_full %>%
@@ -154,6 +168,21 @@ det_hist_full <- det_hist_full %>%
   rename(PatchID = deploymentTags) %>%
   mutate(log_Area = log(Area))
 
+# Identify detection history columns (assuming they are dates)
+detection_columns <- grep("^\\d{4}-\\d{2}-\\d{2}$", colnames(det_hist_full), value = TRUE)
+
+# Summarize the data by PatchID and scientificName
+det_hist_patch <- det_hist_full %>%
+  group_by(PatchID, scientificName) %>%
+  summarise(
+    # Keep covariates, ensuring they are consistent within a patch
+    across(c(cameraHeight, Matrix, Area, min_distance_to_next_patch_km, 
+             TreeDensity, VegetationCover, ForestType, log_Area), ~ first(.x)),
+    # Summarize detection history: 1 if any camera detected, else 0
+    across(all_of(detection_columns), ~ as.integer(any(.x == 1))),
+    n_cameras = n_distinct(locationName),  # Add number of cameras per patch
+    .groups = "drop"
+  )
 
 ## Create Site-Covariates ####
 # Create site-specific covariate data (outside the loop)
@@ -163,16 +192,15 @@ sitecovs <- det_hist_full %>%
   mutate_if(is.character, as.factor) %>%
   distinct()  # Keep unique rows only
 
-# Scale continuous variables in sitecovs
-# sitecovs$log_Area <- scale(sitecovs$log_Area)
-# sitecovs$min_distance_to_next_patch_km <- scale(sitecovs$min_distance_to_next_patch_km)
-
-# Check sitecovs-Data
-str(sitecovs)
+# Create patch-spesific covariate data
+p_sitecovs <- det_hist_patch %>%
+  select(PatchID, TreeDensity, VegetationCover, cameraHeight, Matrix, 
+         min_distance_to_next_patch_km, Area, log_Area, n_cameras) %>%
+  mutate_if(is.character, as.factor) %>%
+  distinct()  # Keep unique rows only
 
 
 ## Create Observation Covariates ####
-
 # Initialize a list to store observation covariates
 obscovs <- list()
 
