@@ -70,13 +70,13 @@ community <- wide_df %>%
 # remove unnecessarily Data
 rm(det_hist_selected)
   
-## Communty Analysis ## 
+# # Communty Analysis ##
 # Remove the 'Patch_ID' column and convert data to a matrix
 # occupancy_prob <- as.matrix(ifelse(wide_df[,c(2:8)] >= 0.7, 1, 0))
 occupancy_prob <- as.matrix(wide_df[,c(2:8)])
 
 # Run PERMANOVA on the species composition data
-adonis_result <- adonis2(occupancy_prob ~ log(Area) + Matrix + min_distance_to_next_patch_km, data = community, method = "jaccard", permutations = 5000)
+adonis_result <- adonis2(occupancy_prob ~ log(Area) + Matrix + min_distance_to_next_patch_km, data = community, method = "bray", permutations = 5000)
 
 # View the results
 adonis_result
@@ -89,17 +89,48 @@ adonis_result$significance <- cut(adonis_result$`Pr(>F)`,
 # Plot barplot of R² values
 ggplot(adonis_result, aes(x = rownames(adonis_result) , y = R2)) +
   geom_bar(stat = "identity", fill = "steelblue") +
-  geom_text(aes(label = significance), vjust = -0.5, size = 5) + 
+  geom_text(aes(label = significance), vjust = -0.5, size = 5) +
   theme_minimal() +
+  labs(
+    title = "Effect Size (R²) from PERMANOVA",
+    x = "Classifications",  # Rename x-axis to "Classifications"
+    y = "R²"
+  ) +
   labs(title = "Effect Size (R²) from PERMANOVA",
        x = "Terms", y = "R²") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(size = 11, angle = 45, hjust = 1))
 
 
 
 ### END ###
 #beta <- vegdist(as.matrix(wide_df[,c(2:8)]), method = "jaccard")
+library(sf)
+# Load Presence-Absenc Data
+presence_absence_sf <- st_read('/Users/nr72kini/Desktop/Master Thesis/R/Output/presence_absence_by_patch_new.gpkg')
+str(presence_absence_sf)
 
+# Create a non-spatial version of the data
+presence_absence_df <- st_drop_geometry(presence_absence_sf)
+str(presence_absence_df)
+
+# Filter Patches with wrong number of camera traps
+presence_absence_df <- presence_absence_df %>%
+  filter(CT == SU_trunc) %>%
+  na.omit()
+
+# Create the species data matrix
+species_data <- presence_absence_df %>%
+  select("Patch_ID", 
+         "Capreolus.capreolus", 
+         "Martes", 
+         "Felis.silvestris", 
+         "Sus.scrofa", 
+         "Procyon.lotor", 
+         "Meles.meles", 
+         "Vulpes.vulpes")
+
+
+# # Generalized dissimilarity model #
 # Load the gdm package
 library(gdm)
 
@@ -112,19 +143,18 @@ species_data <- as.data.frame(community[, c("Patch_ID", "Capreolus capreolus_Mod
                               "Sus scrofa_Model4", 
                               "Vulpes vulpes_Model1")])
 
+str(species_data)
+
 # convert to presence absence data
-species_data[,c(2:8)] <- as.matrix(ifelse(species_data[,c(2:8)] >= 0.7, 1, 0))
+species_data[,c(2:8)] <- as.matrix(ifelse(species_data[,c(2:8)] >= 0.8, 1, 0))
 
 # Create a binary variable for land use: 0 for agriculture, 1 for urban
 community <- community %>%
   mutate(land_use_binary = case_when(
-    Matrix == "Agricultural Matrix" ~ 1,  # Assuming 'Agricultural' represents agriculture
-    Matrix == "Urban Matrix" ~ 0,         # Assuming 'Urban' represents urban
+    Matrix == "Agricultural Matrix" ~ 0,  # Assuming 'Agricultural' represents agriculture
+    Matrix == "Urban Matrix" ~ 1,         # Assuming 'Urban' represents urban
     TRUE ~ NA_real_                # Any other values will be assigned NA
   ))
-
-# Check the updated data
-head(community)
 
 
 # Create the environmental data frame
@@ -146,8 +176,11 @@ gdm_data <- formatsitepair(
   YColumn = "lat"
   )
 
+# gdm.crossvalidation(gdm_data, train.proportion=0.9, n.crossvalid.tests=1,
+#                    geo=FALSE, splines=NULL, knots=NULL)
+
 gdm.varImp(gdm_data, geo = F, splines = NULL, knots = NULL,
-           predSelect = F, nPerm = 500, pValue=0.05, parallel = T, cores = 4, outFile = NULL)
+           predSelect = F, nPerm = 500, pValue=0.05, parallel = F, outFile = NULL)
 
 # Fit the Generalized Dissimilarity Model (GDM)
 gdm_model <- gdm(gdm_data, geo = F)
@@ -156,6 +189,8 @@ gdm_model <- gdm(gdm_data, geo = F)
 summary(gdm_model)
 
 # plot
+plot(gdm_model, type = "spline", xlab = "Predictor Value", ylab = "Partial Dissimilarity")
+
 plot(gdm_model)
 
 

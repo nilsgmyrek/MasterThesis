@@ -157,6 +157,7 @@ det_hist_full <- deployments %>%
 det_hist_full <-  det_hist_full[,-c(4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,23,25)]
 str(det_hist_full)
 
+
 # Remove unnecessary Data
 rm(all_combinations, centroids, covs, deployments, det_hist, existing_combinations, missing_combinations, observations, presence_absence_df, presence_absence_sf, obs_filtered)
 
