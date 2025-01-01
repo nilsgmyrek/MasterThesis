@@ -64,7 +64,7 @@ colnames(umf@fDesign)  # Lists covariates used for state formulas
 # stateformulas6 <- c(rep("~ PatchID + Matrix * log_Area + min_distance_to_next_patch_km", 7))  # Add interaction term
 
 # Define state formulas (occupancy) for testing different covariate combinations
-stateformulas0 <- c(rep("~ 1", 7))  # Intercept-only model for all species
+stateformulas0 <- c(rep("~ (1 | PatchID)", 7))  # Intercept-only model for all species
 stateformulas1 <- c(rep("~ Matrix", 7))  # Add habitat matrix
 stateformulas2 <- c(rep("~ log_Area", 7))  # Add log-transformed area
 stateformulas3 <- c(rep("~ Matrix + log_Area", 7))  # Combine covariates
